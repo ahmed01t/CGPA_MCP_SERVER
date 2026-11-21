@@ -8,17 +8,15 @@ from pathlib import Path
 
 from fastmcp import FastMCP
 
-# The existing tools.py stays at the project root, so make it importable when
-# this file is started from inside the server/ directory.
+# Also allow `python server.py` when the terminal is already in server/.
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from tools import ALL_TOOLS, SEMESTER_HOURS  # noqa: E402
+from tools import ALL_TOOLS, SEMESTER_HOURS 
 
 
 # tools.py uses LangChain's @tool decorator. FastMCP needs the original Python
-# function, available as each StructuredTool's .func attribute.
 mcp = FastMCP("Current CGPA Guider", tools=[tool.func for tool in ALL_TOOLS])
 
 
