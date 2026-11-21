@@ -14,7 +14,7 @@ Copy-Item agent/.env.example agent/.env
 ```
 
 Add your Groq key to `agent/.env`. For local use, keep
-`MCP_URL=http://127.0.0.1:8000/mcp`.
+`MCP_URL= https://sour-aqua-ferret.fastmcp.app/mcp".
 
 ## 2. Check the MCP server without an agent
 
