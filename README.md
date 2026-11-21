@@ -61,9 +61,10 @@ Python packages. Its deployment guide has the current setup steps:
 [Prefect Horizon deployment](https://gofastmcp.com/deployment/prefect-horizon).
 
 After deployment, Horizon gives the server a URL. Set `MCP_URL` in
-`agent/.env` to that URL with `/mcp` at the end. If you create a bearer/API key
-for the server, put it in `FASTMCP_KEY`. The agent sends that key when it lists
-and calls tools.
+`agent/.env` to that URL with `/mcp` at the end. Horizon OAuth opens a browser
+for sign-in the first time the agent connects. If you create a bearer/API key
+instead, put it in `FASTMCP_KEY`; the agent will send it when it lists and
+calls tools.
 
 For example, a Horizon URL looks like
 `https://your-server-name.fastmcp.app/mcp`. You can check it with:

@@ -1,8 +1,10 @@
 """Connect to FastMCP and turn its tools into async LangChain tools."""
 
 from typing import Any
+from urllib.parse import urlparse
 
 from fastmcp import Client
+from fastmcp.client.auth import OAuth
 from langchain_core.tools import StructuredTool
 from pydantic import Field, create_model
 
@@ -23,7 +25,7 @@ def python_type(field: dict[str, Any]) -> Any:
     return str
 
 
-def make_tool(server_tool, url: str, key: str | None) -> StructuredTool:
+def make_tool(server_tool, url: str, auth) -> StructuredTool:
     """Make one LangChain tool that calls the matching MCP tool."""
     schema = getattr(server_tool, "input_schema", None)
     if schema is None:  # Older MCP SDKs use this spelling.
@@ -41,7 +43,7 @@ def make_tool(server_tool, url: str, key: str | None) -> StructuredTool:
     args = create_model(f"{server_tool.name.title()}Args", **fields)
 
     async def call_server(**arguments) -> str:
-        async with Client(url, auth=key or None) as client:
+        async with Client(url, auth=auth) as client:
             result = await client.call_tool(server_tool.name, arguments)
         if result.data is not None:
             return str(result.data)
@@ -59,6 +61,16 @@ def make_tool(server_tool, url: str, key: str | None) -> StructuredTool:
 
 async def load_mcp_tools(url: str, key: str | None = None) -> list[StructuredTool]:
     """List the server tools and wrap them for the LangGraph agent."""
-    async with Client(url, auth=key or None) as client:
+    host = urlparse(url).hostname or ""
+    if key:
+        auth = key
+    elif host.endswith((".fastmcp.app", ".horizon.prefect.io")):
+        # Horizon uses browser-based OAuth. Reuse this OAuth object so its
+        # token can be reused by the tool wrappers after tool discovery.
+        auth = OAuth()
+    else:
+        auth = None
+
+    async with Client(url, auth=auth) as client:
         server_tools = await client.list_tools()
-    return [make_tool(tool, url, key) for tool in server_tools]
+    return [make_tool(tool, url, auth) for tool in server_tools]
