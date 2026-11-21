@@ -52,19 +52,26 @@ The agent streams model text as it arrives and prints progress when a tool
 starts and finishes. If a network failure leaves a tool call without a result,
 the agent adds a clear error result to the saved thread before the next turn.
 
-## 4. Use a hosted server
+## 4. Deploy on Prefect Horizon
 
-`render.yaml` prepares a free Render web service. Push this project to a Git
-provider, connect the repository in Render, and create the service from the
-blueprint. Render supplies the public service URL; FastMCP's HTTP endpoint is
-that URL plus `/mcp`. Set `MCP_URL` in `agent/.env` to that full endpoint.
+Horizon deploys FastMCP servers from GitHub. Push this project to a GitHub
+repository, connect the repository in Horizon, and set the server entry point
+to `server/server.py:mcp`. Horizon reads `requirements.txt` to install the
+Python packages. Its deployment guide has the current setup steps:
+[Prefect Horizon deployment](https://gofastmcp.com/deployment/prefect-horizon).
 
-Render's free web services can be used at no charge, but they spin down after
-15 minutes without traffic and use an ephemeral filesystem. This MCP server
-does not store conversation memory; the agent's SQLite file remains local to
-the agent. See [Render's free service limits](https://render.com/docs/free).
+After deployment, Horizon gives the server a URL. Set `MCP_URL` in
+`agent/.env` to that URL with `/mcp` at the end. If you create a bearer/API key
+for the server, put it in `FASTMCP_KEY`. The agent sends that key when it lists
+and calls tools.
 
-The included Render service is unauthenticated to keep the assignment setup
-simple. Anyone with its public URL can call the exposed tools, including the
-report-saving tool. For private use, configure authentication at the hosting
-gateway and set `FASTMCP_KEY` in `agent/.env` to the matching bearer token.
+For example, a Horizon URL looks like
+`https://your-server-name.fastmcp.app/mcp`. You can check it with:
+
+```powershell
+fastmcp list $env:MCP_URL --auth $env:FASTMCP_KEY
+fastmcp call $env:MCP_URL get_credit_hours semesters='[5,6]' --auth $env:FASTMCP_KEY
+```
+
+The SQLite chat history stays on the computer running the agent; it is not
+stored by the MCP server.
